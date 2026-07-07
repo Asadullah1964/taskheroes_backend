@@ -61,8 +61,8 @@ export const login = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
     });
 
     return res.status(200).json(
@@ -117,7 +117,13 @@ export const googleLogin = asyncHandler(async (req, res) => {
 
     res.cookie("token", jwtToken, cookieOptions);
 
+    user.password = undefined;
+
     return res.status(200).json(
-        new ApiResponse(200, "Google login successful", user)
+        new ApiResponse(
+            200,
+            "Google login successful",
+            user
+        )
     );
 });
