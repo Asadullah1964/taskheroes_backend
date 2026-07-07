@@ -13,18 +13,22 @@ import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 
 app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
+    cors({
+        origin: process.env.CLIENT_URL,
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
 );
 app.use(express.json());
 
 app.use(cookieParser());
 
-app.use(helmet());
+app.use(
+    helmet({
+        crossOriginOpenerPolicy: false,
+    })
+);
 
 app.use(hpp());
 
