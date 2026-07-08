@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -9,19 +10,38 @@ import hpp from "hpp";
 import authRoutes from "./modules/auth/auth.routes.js";
 import errorHandler from "./middleware/errorHandler.js";
 
-
 const app = express();
 
-app.use(
-    cors({
-        origin: process.env.CLIENT_URL,
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
-);
-app.use(express.json());
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
+console.log("CLIENT_URL from env:", CLIENT_URL);
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        console.log("Incoming Origin:", origin);
+
+        if (!origin) return callback(null, true);
+
+        if (origin === CLIENT_URL) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+// app.options("/{*splat}", cors(corsOptions)); // only add this if needed
+
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.originalUrl}`);
+    next();
+});
+
+app.use(express.json());
 app.use(cookieParser());
 
 app.use(
@@ -31,7 +51,6 @@ app.use(
 );
 
 app.use(hpp());
-
 app.use(morgan("dev"));
 
 app.use(
@@ -48,7 +67,6 @@ app.get("/", (req, res) => {
     });
 });
 
-// Global Error Handler (Always Keep Last)
 app.use("/api/auth", authRoutes);
 app.use(errorHandler);
 
