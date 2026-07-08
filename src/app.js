@@ -9,6 +9,7 @@ import hpp from "hpp";
 
 import authRoutes from "./modules/auth/auth.routes.js";
 import errorHandler from "./middleware/errorHandler.js";
+import userRoutes from "./modules/user/user.routes.js";
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use(errorHandler);
 
 export default app;
