@@ -8,8 +8,10 @@ import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 
 import authRoutes from "./modules/auth/auth.routes.js";
+import taskRoutes from "./modules/task/task.routes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import userRoutes from "./modules/user/user.routes.js";
+import reviewRoutes from "./modules/review/review.routes.js";
 
 const app = express();
 
@@ -70,6 +72,9 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use(errorHandler);
+
 
 export default app;
