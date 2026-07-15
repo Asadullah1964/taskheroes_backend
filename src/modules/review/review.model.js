@@ -22,9 +22,9 @@ const reviewSchema = new mongoose.Schema(
 
     rating: {
       type: Number,
-      min: 1,
-      max: 5,
       required: true,
+      min: [1, "Rating must be at least 1"],
+      max: [5, "Rating cannot exceed 5"],
     },
 
     comment: {
@@ -35,6 +35,18 @@ const reviewSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  }
+);
+
+// Prevent duplicate reviews
+reviewSchema.index(
+  {
+    task: 1,
+    client: 1,
+    worker: 1,
+  },
+  {
+    unique: true,
   }
 );
 

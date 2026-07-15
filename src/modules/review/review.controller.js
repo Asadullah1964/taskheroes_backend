@@ -46,9 +46,11 @@ export const createReview = asyncHandler(async (req, res) => {
     );
   }
 
-  const existingReview = await Review.findOne({
-    task: task._id,
-  });
+ const existingReview = await Review.findOne({
+  task: task._id,
+  client: req.user._id,
+  worker: acceptedApplication.worker,
+});
 
   if (existingReview) {
     throw new ApiError(
@@ -75,17 +77,58 @@ export const createReview = asyncHandler(async (req, res) => {
     reviews.length;
 
   await User.findByIdAndUpdate(
-    acceptedApplication.worker,
-    {
-      "workerProfile.rating": Number(
-        average.toFixed(1)
-      ),
-    }
-  );
+  acceptedApplication.worker,
+  {
+    "workerProfile.rating": Number(
+      average.toFixed(1)
+    ),
+    "workerProfile.totalReviews": reviews.length,
+  }
+);
+
+const populatedReview = await Review.findById(review._id)
+  .populate("worker", "name profileImage")
+  .populate("client", "name profileImage");
 
   res.status(201).json({
     success: true,
     message: "Review submitted successfully",
-    review,
+    review: populatedReview,
+  });
+});
+
+export const getMyReviews = asyncHandler(async (req, res) => {
+  if (req.user.role !== "worker") {
+    throw new ApiError(
+      403,
+      "Only workers can access this resource"
+    );
+  }
+
+  const reviews = await Review.find({
+    worker: req.user._id,
+  })
+    .populate("client", "name profileImage")
+    .populate("task", "title")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: reviews.length,
+    reviews,
+  });
+});
+
+export const getWorkerReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find({
+    worker: req.params.workerId,
+  })
+    .populate("client", "name profileImage")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: reviews.length,
+    reviews,
   });
 });

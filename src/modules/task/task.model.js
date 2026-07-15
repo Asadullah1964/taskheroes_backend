@@ -76,8 +76,14 @@ const taskSchema = new mongoose.Schema(
       default: "Open",
     },
 
+    assignedWorker: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+    },
     applications: [applicationSchema],
   },
+  
   {
     timestamps: true,
   }

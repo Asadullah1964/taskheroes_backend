@@ -1,6 +1,7 @@
 import Task from "./task.model.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiError from "../../utils/ApiError.js";
+import Review from "../review/review.model.js";
 import { 
     createTaskSchema,
     updateTaskSchema,
@@ -111,7 +112,14 @@ export const getTaskById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const task = await Task.findById(id)
-    .populate("client", "name email profileImage");
+  .populate(
+    "client",
+    "name email profileImage"
+  )
+  .populate(
+    "applications.worker",
+    "name email profileImage"
+  );
 
   if (!task) {
     throw new ApiError(404, "Task not found");
@@ -262,12 +270,63 @@ export const getMyTasks = asyncHandler(async (req, res) => {
       "applications.worker",
       "name email profileImage workerProfile"
     )
+    .populate(
+      "assignedWorker",
+      "name profileImage"
+    )
     .sort({ createdAt: -1 });
+
+  const tasksWithReviewStatus = await Promise.all(
+    tasks.map(async (task) => {
+      let hasReviewed = false;
+
+      if (task.status === "Completed" && task.assignedWorker) {
+        hasReviewed = !!(await Review.findOne({
+          task: task._id,
+          client: req.user._id,
+          worker: task.assignedWorker,
+        }));
+      }
+
+      return {
+        ...task.toObject(),
+        hasReviewed,
+      };
+    })
+  );
 
   res.status(200).json({
     success: true,
-    count: tasks.length,
-    tasks,
+    count: tasksWithReviewStatus.length,
+    tasks: tasksWithReviewStatus,
+  });
+});
+
+export const getTaskApplications = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const task = await Task.findById(id)
+    .populate(
+      "applications.worker",
+      "name email profileImage workerProfile"
+    );
+
+  if (!task) {
+    throw new ApiError(404, "Task not found");
+  }
+
+  // Only the task owner can view applications
+  if (task.client.toString() !== req.user._id.toString()) {
+    throw new ApiError(
+      403,
+      "You are not authorized to view these applications"
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    count: task.applications.length,
+    applications: task.applications,
   });
 });
 
@@ -329,13 +388,14 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
 
   if (status === "Accepted") {
     task.status = "Assigned";
+    task.assignedWorker = application.worker;
 
     task.applications.forEach((app) => {
-      if (app._id.toString() !== applicationId) {
-        app.status = "Rejected";
-      }
+        if (app._id.toString() !== applicationId) {
+            app.status = "Rejected";
+        }
     });
-  }
+}
 
   await task.save();
 
