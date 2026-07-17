@@ -7,6 +7,7 @@ import {
     updateProfile,
     becomeWorker,
     uploadProfileImage,
+    getWorkerProfile, 
 } from "./user.controller.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ router.get("/me", protect, getMyProfile);
 router.put("/profile", protect, updateProfile);
 
 router.put("/become-worker", protect, becomeWorker);
+router.get("/workers/:id", getWorkerProfile);
 
 router.post(
     "/upload-profile-image",

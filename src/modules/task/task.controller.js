@@ -422,30 +422,43 @@ export const getAppliedTasks = asyncHandler(async (req, res) => {
       "client",
       "name email profileImage location"
     )
+    .populate(
+      "assignedWorker",
+      "name profileImage"
+    )
     .sort({ createdAt: -1 });
 
-  const appliedTasks = tasks.map((task) => {
-    const application = task.applications.find(
-      (app) =>
-        app.worker.toString() === req.user._id.toString()
-    );
+  const appliedTasks = tasks
+    .map((task) => {
+      const application = task.applications.find(
+        (app) =>
+          app.worker.toString() === req.user._id.toString()
+      );
 
-    return {
-      _id: task._id,
-      title: task.title,
-      description: task.description,
-      category: task.category,
-      budget: task.budget,
-      location: task.location,
-      deadline: task.deadline,
-      taskStatus: task.status,
-      applicationStatus: application.status,
-      proposal: application.proposal,
-      expectedPrice: application.expectedPrice,
-      appliedAt: application.createdAt,
-      client: task.client,
-    };
-  });
+      // Safety check
+      if (!application) return null;
+
+      return {
+        _id: task._id,
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        budget: task.budget,
+        location: task.location,
+        deadline: task.deadline,
+
+        taskStatus: task.status,
+        applicationStatus: application.status,
+
+        proposal: application.proposal,
+        expectedPrice: application.expectedPrice,
+        appliedAt: application.createdAt,
+
+        client: task.client,
+        assignedWorker: task.assignedWorker,
+      };
+    })
+    .filter(Boolean);
 
   res.status(200).json({
     success: true,
