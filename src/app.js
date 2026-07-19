@@ -14,6 +14,7 @@ import userRoutes from "./modules/user/user.routes.js";
 import reviewRoutes from "./modules/review/review.routes.js";
 import conversationRoutes from "./modules/conversation/conversation.routes.js";
 import messageRoutes from "./modules/message/message.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
 
 const app = express();
 
@@ -61,7 +62,7 @@ app.use(morgan("dev"));
 app.use(
     rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: 100,
+        max: 10000,
     })
 );
 
@@ -75,6 +76,11 @@ app.get("/", (req, res) => {
 app.use(
   "/api/conversations",
   conversationRoutes
+);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
 );
 
 app.use("/api/auth", authRoutes);

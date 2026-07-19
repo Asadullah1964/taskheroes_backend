@@ -4,7 +4,7 @@ import { getIO } from "../../socket/socket.js";
 
 import Message from "./message.model.js";
 import Conversation from "../conversation/conversation.model.js";
-
+import sendNotification from "../../utils/sendNotification.js";
 
 export const getMessages = asyncHandler(async (req, res) => {
   const { conversationId } = req.params;
@@ -75,6 +75,15 @@ export const sendMessage = asyncHandler(async (req, res) => {
   conversation.lastMessageAt = new Date();
 
   await conversation.save();
+
+  await sendNotification({
+    receiver,
+    sender: req.user._id,
+    type: "MESSAGE",
+    title: "New Message",
+    message: text,
+    link: `/chat/${conversationId}`,
+});
 
   const io = getIO();
 

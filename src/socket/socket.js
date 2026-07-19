@@ -15,10 +15,17 @@ export const initializeSocket = (server) => {
     console.log("Socket Connected:", socket.id);
 
     socket.on("register", (userId) => {
-      if (!userId) return;
-      onlineUsers.set(userId.toString(), socket.id);
-      io.emit("online-users", Array.from(onlineUsers.keys()));
-    });
+    onlineUsers.set(userId, socket.id);
+
+    socket.join(userId);
+
+    console.log(`${userId} joined personal room`);
+
+    io.emit(
+      "online-users",
+      Array.from(onlineUsers.keys())
+    );
+});
 
     socket.on("join-conversation", (conversationId) => {
       if (!conversationId) return;

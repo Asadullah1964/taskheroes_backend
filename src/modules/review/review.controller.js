@@ -4,6 +4,7 @@ import User from "../user/user.model.js";
 
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiError from "../../utils/ApiError.js";
+import sendNotification from "../../utils/sendNotification.js";
 
 import { createReviewSchema } from "./review.validation.js";
 
@@ -66,6 +67,15 @@ export const createReview = asyncHandler(async (req, res) => {
     rating: req.body.rating,
     comment: req.body.comment,
   });
+
+  await sendNotification({
+  receiver: review.worker,
+  sender: req.user._id,
+  type: "REVIEW",
+  title: "New Review",
+  message: `You received a ${review.rating}★ review for "${task.title}".`,
+  link: `/workers/${review.worker}`,
+});
 
   // Update worker average rating
   const reviews = await Review.find({

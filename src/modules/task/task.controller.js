@@ -2,6 +2,7 @@ import Task from "./task.model.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiError from "../../utils/ApiError.js";
 import Review from "../review/review.model.js";
+import sendNotification from "../../utils/sendNotification.js";
 import { 
     createTaskSchema,
     updateTaskSchema,
@@ -21,11 +22,22 @@ export const createTask = asyncHandler(async (req, res) => {
     client: req.user._id,
   });
 
+
   res.status(201).json({
     success: true,
     message: "Task created successfully",
     task,
   });
+
+// await sendNotification({
+//   receiver: task.worker,
+//   sender: req.user._id,
+//   type: "APPLICATION",
+//   title: "New Tasks Posted",
+//   message: `${req.user.name} posted new task "${task.title}"`,
+//   link: `/tasks/${task._id}`,
+// });
+
 });
 
 export const getTasks = asyncHandler(async (req, res) => {
@@ -256,6 +268,15 @@ export const applyTask = asyncHandler(async (req, res) => {
 
   await task.save();
 
+  await sendNotification({
+  receiver: task.client,
+  sender: req.user._id,
+  type: "APPLICATION",
+  title: "New Application",
+  message: `${req.user.name} applied for your task "${task.title}"`,
+  link: `/application/${task._id}`,
+});
+
   res.status(201).json({
     success: true,
     message: "Application submitted successfully",
@@ -386,18 +407,37 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
 
   application.status = status;
 
-  if (status === "Accepted") {
-    task.status = "Assigned";
-    task.assignedWorker = application.worker;
+if (status === "Accepted") {
+  task.status = "Assigned";
+  task.assignedWorker = application.worker;
 
-    task.applications.forEach((app) => {
-        if (app._id.toString() !== applicationId) {
-            app.status = "Rejected";
-        }
-    });
+  task.applications.forEach((app) => {
+    if (app._id.toString() !== applicationId) {
+      app.status = "Rejected";
+    }
+  });
 }
 
-  await task.save();
+await task.save();
+
+// Notify selected worker
+await sendNotification({
+  receiver: application.worker,
+  sender: req.user._id,
+  type:
+    status === "Accepted"
+      ? "APPLICATION_ACCEPTED"
+      : "APPLICATION_REJECTED",
+  title:
+    status === "Accepted"
+      ? "Application Accepted"
+      : "Application Rejected",
+  message:
+    status === "Accepted"
+      ? `Your application for "${task.title}" has been accepted.`
+      : `Your application for "${task.title}" has been rejected.`,
+  link: `/tasks/${task._id}`,
+});
 
   res.status(200).json({
     success: true,
