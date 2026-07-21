@@ -18,7 +18,7 @@ import notificationRoutes from "./modules/notification/notification.routes.js";
 
 const app = express();
 
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const CLIENT_URL = process.env.CLIENT_URL;
 
 console.log("CLIENT_URL from env:", CLIENT_URL);
 
@@ -36,7 +36,7 @@ const corsOptions = {
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
 };
 
 app.use(cors(corsOptions));
